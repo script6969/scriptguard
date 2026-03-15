@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptGuard — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07070a; --bg2: #0c0c10; --bg3: #111118;
+  --surface: #16161f; --surface2: #1e1e2a;
+  --border: rgba(255,255,255,0.055); --border2: rgba(255,255,255,0.1);
+  --text: #e8e8f0; --muted: #6b6b82; --dim: #2e2e3e;
+  --accent: #7c6af7; --accent2: #5b4de0; --glow: rgba(124,106,247,0.2);
+  --green: #3dd68c; --yellow: #f7c948; --red: #f75a5a;
+  --font: 'Syne', sans-serif; --body: 'Outfit', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  --sidebar: 200px;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--body); overflow: hidden; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 2px; }
+
+/* LAYOUT */
+#app { display: flex; height: 100vh; }
+
+/* SIDEBAR */
+aside {
+  width: var(--sidebar); background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0;
+}
+
+.sidebar-logo {
+  height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font); font-size: 15px; font-weight: 800; letter-spacing: -0.03em;
+}
+.s-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 7px var(--accent); }
+
+nav.side { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+.s-nav {
+  padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center; gap: 9px;
+  transition: all 0.15s; border: none; background: transparent;
+  font-family: var(--body); text-align: left; width: 100%;
+}
+.s-nav:hover { background: var(--surface); color: var(--text); }
+.s-nav.active { background: var(--surface2); color: var(--text); }
+.s-nav svg { flex-shrink: 0; opacity: 0.7; }
+.s-nav.active svg { opacity: 1; }
+
+.sidebar-bottom { padding: 10px 8px; border-top: 1px solid var(--border); }
+
+.user-chip {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border-radius: 8px; cursor: pointer; transition: background 0.15s;
+}
+.user-chip:hover { background: var(--surface); }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: rgba(124,106,247,0.15); border: 1px solid rgba(124,106,247,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+  font-family: var(--font);
+}
+.user-name { font-size: 12px; font-weight: 500; }
+.user-plan { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+/* MAIN */
+main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: 56px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 22px; gap: 12px; flex-shrink: 0;
+}
+.topbar-title { font-family: var(--font); font-size: 16px; font-weight: 800; letter-spacing: -0.03em; }
+.topbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+.content { flex: 1; overflow-y: auto; padding: 22px; }
+
+/* VIEWS */
+.view { display: none; flex-direction: column; gap: 18px; }
+.view.on { display: flex; }
+
+/* STAT CARDS */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 11px; padding: 14px 16px;
+}
+.stat-card-l { font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.stat-card-v { font-family: var(--font); font-size: 26px; font-weight: 800; letter-spacing: -0.04em; }
+.stat-card-d { font-size: 11px; color: var(--green); margin-top: 4px; font-family: var(--mono); }
+
+/* TABLE */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.table-head { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
+.table-head h3 { font-family: var(--font); font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
+.table-head-right { margin-left: auto; display: flex; gap: 8px; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 8px 14px; text-align: left; font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.07em; text-transform: uppercase; font-weight: 400; border-bottom: 1px solid var(--border); }
+tbody td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(255,255,255,0.015); }
+
+.mono { font-family: var(--mono); font-size: 12px; }
+.muted { color: var(--muted); }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; font-family: var(--mono); white-space: nowrap; }
+.b-green  { background: rgba(61,214,140,0.1);  color: var(--green);  }
+.b-yellow { background: rgba(247,201,72,0.1);  color: var(--yellow); }
+.b-red    { background: rgba(247,90,90,0.1);   color: var(--red);    }
+.b-dim    { background: rgba(255,255,255,0.05); color: var(--muted);  }
+.b-accent { background: rgba(124,106,247,0.1); color: var(--accent); }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; font-family: var(--body); cursor: pointer; transition: all 0.15s; border-radius: 7px; font-size: 13px; padding: 7px 13px; }
+.btn-primary { background: var(--accent); color: #fff; font-weight: 500; }
+.btn-primary:hover { background: var(--accent2); box-shadow: 0 0 18px var(--glow); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(247,90,90,0.2); }
+.btn-danger:hover { background: rgba(247,90,90,0.1); }
+.btn-sm { font-size: 11px; padding: 4px 9px; border-radius: 5px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* INPUT */
+input, select, textarea {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--text); font-family: var(--body); font-size: 13px;
+  padding: 8px 11px; outline: none; transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus { border-color: rgba(124,106,247,0.5); }
+input::placeholder, textarea::placeholder { color: var(--dim); }
+select option { background: var(--bg2); }
+
+/* MODAL */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(5px);
+  z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: 16px;
+  padding: 28px; width: 100%; max-width: 440px; position: relative;
+  animation: popIn 0.2s ease;
+}
+@keyframes popIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+.modal-title { font-family: var(--font); font-size: 17px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 20px; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface); border: 1px solid var(--border2); color: var(--muted); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { color: var(--text); }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+.field label { font-size: 12px; color: var(--muted); }
+.field input, .field select { width: 100%; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+
+/* EMPTY STATE */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 10px; text-align: center; }
+.empty-icon { color: var(--dim); margin-bottom: 4px; }
+.empty h3 { font-family: var(--font); font-size: 15px; font-weight: 700; color: var(--muted); }
+.empty p { font-size: 13px; color: var(--dim); max-width: 260px; line-height: 1.6; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast-item { background: var(--bg3); border: 1px solid var(--border2); border-radius: 9px; padding: 10px 14px; font-size: 13px; animation: toastIn 0.2s ease; min-width: 200px; }
+.toast-item.ok  { border-color: rgba(61,214,140,0.3); color: var(--green); }
+.toast-item.err { border-color: rgba(247,90,90,0.3);  color: var(--red);   }
+@keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* API KEY DISPLAY */
+.api-key-box { background: var(--dim); border-radius: 8px; padding: 10px 13px; font-family: var(--mono); font-size: 12px; color: var(--muted); word-break: break-all; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-logo"><div class="s-dot"></div>ScriptGuard</div>
+    <nav class="side">
+      <button class="s-nav active" onclick="showView('overview')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </button>
+      <button class="s-nav" onclick="showView('scripts')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Scripts
+      </button>
+      <button class="s-nav" onclick="showView('keys')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        Keys
+      </button>
+      <button class="s-nav" onclick="showView('executions')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Executions
+      </button>
+      <button class="s-nav" onclick="showView('blacklist')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Blacklist
+      </button>
+      <button class="s-nav" onclick="showView('settings')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-chip" onclick="showView('settings')">
+        <div class="user-avatar" id="user-avatar">—</div>
+        <div>
+          <div class="user-name" id="user-name">Loading...</div>
+          <div class="user-plan" id="user-plan">free</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Overview</div>
+      <div class="topbar-right" id="topbar-actions"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="view on" id="view-overview">
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-card-l">Scripts</div><div class="stat-card-v" id="ov-scripts" style="color:var(--accent)">—</div></div>
+          <div class="stat-card"><div class="stat-card-l">Active keys</div><div class="stat-card-v" id="ov-keys" style="color:var(--green)">—</div><div class="stat-card-d" id="ov-keys-d"></div></div>
+          <div class="stat-card"><div class="stat-card-l">Executions today</div><div class="stat-card-v" id="ov-execs">—</div></div>
+          <div class="stat-card"><div class="stat-card-l">Blocked today</div><div class="stat-card-v" id="ov-blocked" style="color:var(--red)">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head"><h3>Recent scripts</h3></div>
+          <table>
+            <thead><tr><th>Name</th><th>Status</th><th>Keys</th><th>Executions today</th></tr></thead>
+            <tbody id="ov-table"><tr><td colspan="4"><div class="empty"><p class="muted">Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SCRIPTS -->
+      <div class="view" id="view-scripts">
+        <div class="table-wrap">
+          <div class="table-head">
+            <h3>Scripts</h3>
+            <div class="table-head-right">
+              <button class="btn btn-primary btn-sm" onclick="openModal('modal-script')">+ New script</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Keys</th><th>Executions</th><th></th></tr></thead>
+            <tbody id="scripts-table"><tr><td colspan="6"><div class="empty"><p class="muted">Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- KEYS -->
+      <div class="view" id="view-keys">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="keys-filter-script" style="font-size:12px;padding:6px 10px" onchange="loadKeys()"><option value="">All scripts</option></select>
+          <select id="keys-filter-status" style="font-size:12px;padding:6px 10px" onchange="loadKeys()">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="banned">Banned</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head">
+            <h3>License keys</h3>
+            <div class="table-head-right">
+              <button class="btn btn-primary btn-sm" onclick="openModal('modal-key')">+ Generate keys</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Key</th><th>Script</th><th>Status</th><th>Expires</th><th>Executions</th><th>HWID</th><th></th></tr></thead>
+            <tbody id="keys-table"><tr><td colspan="7"><div class="empty"><p class="muted">Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EXECUTIONS -->
+      <div class="view" id="view-executions">
+        <div class="table-wrap">
+          <div class="table-head"><h3>Execution log</h3></div>
+          <table>
+            <thead><tr><th>Time</th><th>Key</th><th>Script</th><th>HWID</th><th>IP</th><th>Result</th></tr></thead>
+            <tbody id="exec-table"><tr><td colspan="6"><div class="empty"><p class="muted">Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BLACKLIST -->
+      <div class="view" id="view-blacklist">
+        <div class="table-wrap">
+          <div class="table-head">
+            <h3>Blacklist</h3>
+            <div class="table-head-right">
+              <button class="btn btn-primary btn-sm" onclick="openModal('modal-blacklist')">+ Add entry</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Type</th><th>Value</th><th>Reason</th><th>Added</th><th></th></tr></thead>
+            <tbody id="bl-table"><tr><td colspan="5"><div class="empty"><p class="muted">Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="table-wrap" style="padding:22px;display:flex;flex-direction:column;gap:18px">
+          <div>
+            <div style="font-family:var(--font);font-size:14px;font-weight:700;margin-bottom:4px">Account</div>
+            <div style="font-size:13px;color:var(--muted)" id="s-email"></div>
+          </div>
+          <div style="height:1px;background:var(--border)"></div>
+          <div>
+            <div style="font-family:var(--font);font-size:14px;font-weight:700;margin-bottom:10px">API Key</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:300">Use this key to make API calls on behalf of your account.</p>
+            <div class="api-key-box">
+              <span id="s-apikey" style="word-break:break-all">—</span>
+              <button class="btn btn-ghost btn-sm" onclick="copyApiKey()">Copy</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="regenApiKey()">Regenerate</button>
+          </div>
+          <div style="height:1px;background:var(--border)"></div>
+          <div>
+            <div style="font-family:var(--font);font-size:14px;font-weight:700;margin-bottom:10px">Verify endpoint</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:300">Call this from your scripts to verify a license key.</p>
+            <div class="api-key-box" style="flex-direction:column;align-items:flex-start;gap:6px">
+              <span class="mono" style="color:var(--accent)">POST http://localhost:3000/api/keys/verify</span>
+              <span class="mono" style="color:var(--muted);font-size:11px">Body: { "key": "SG-XXXX-XXXX-XXXX-XXXX", "script_id": 1, "hwid": "..." }</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--border)"></div>
+          <div>
+            <button class="btn btn-danger btn-sm" onclick="logout()">Sign out</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL: New Script -->
+<div class="overlay" id="modal-script">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-script')">x</button>
+    <div class="modal-title">New script</div>
+    <div class="field"><label>Script name</label><input id="sc-name" placeholder="my_script.lua"></div>
+    <div class="field"><label>Description (optional)</label><input id="sc-desc" placeholder="A short description"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-script')">Cancel</button>
+      <button class="btn btn-primary" onclick="createScript()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Generate Keys -->
+<div class="overlay" id="modal-key">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-key')">x</button>
+    <div class="modal-title">Generate keys</div>
+    <div class="field"><label>Script</label><select id="k-script" style="width:100%"></select></div>
+    <div class="field"><label>Label (optional)</label><input id="k-label" placeholder="e.g. Buyer name"></div>
+    <div class="field"><label>Quantity (max 500)</label><input id="k-count" type="number" value="1" min="1" max="500"></div>
+    <div class="field"><label>Expires at (optional)</label><input id="k-exp" type="datetime-local"></div>
+    <div class="field"><label>Max executions (optional)</label><input id="k-maxexec" type="number" placeholder="Leave blank for unlimited"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-key')">Cancel</button>
+      <button class="btn btn-primary" onclick="generateKeys()">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Blacklist -->
+<div class="overlay" id="modal-blacklist">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-blacklist')">x</button>
+    <div class="modal-title">Add to blacklist</div>
+    <div class="field"><label>Type</label>
+      <select id="bl-type" style="width:100%">
+        <option value="hwid">HWID</option>
+        <option value="ip">IP address</option>
+        <option value="key">License key</option>
+      </select>
+    </div>
+    <div class="field"><label>Value</label><input id="bl-value" placeholder="Enter HWID, IP, or key"></div>
+    <div class="field"><label>Reason (optional)</label><input id="bl-reason" placeholder="e.g. Chargeback"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-blacklist')">Cancel</button>
+      <button class="btn btn-danger" onclick="addBlacklist()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+
+// ---- AUTH ----
+const token = localStorage.getItem('sg_token');
+if (!token) { window.location.href = 'login.html'; }
+
+let user = JSON.parse(localStorage.getItem('sg_user') || '{}');
+
+function authHeader() { return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }; }
+
+async function api(method, path, body) {
+  const res = await fetch(API + path, { method, headers: authHeader(), body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ---- INIT ----
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    user = await api('GET', '/auth/me');
+    localStorage.setItem('sg_user', JSON.stringify(user));
+  } catch { logout(); return; }
+
+  document.getElementById('user-name').textContent = user.username;
+  document.getElementById('user-plan').textContent  = user.plan;
+  document.getElementById('user-avatar').textContent = user.username[0].toUpperCase();
+  document.getElementById('s-email').textContent = user.email;
+  document.getElementById('s-apikey').textContent = user.api_key;
+
+  loadOverview();
+});
+
+// ---- VIEWS ----
+const views = ['overview','scripts','keys','executions','blacklist','settings'];
+const viewTitles = { overview:'Overview', scripts:'Scripts', keys:'License Keys', executions:'Execution Log', blacklist:'Blacklist', settings:'Settings' };
+
+function showView(name) {
+  views.forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('on', v === name);
+  });
+  document.querySelectorAll('.s-nav').forEach((btn, i) => {
+    btn.classList.toggle('active', views[i] === name);
+  });
+  document.getElementById('topbar-title').textContent = viewTitles[name] || name;
+
+  if (name === 'overview')    loadOverview();
+  if (name === 'scripts')     loadScripts();
+  if (name === 'keys')        { populateScriptSelects(); loadKeys(); }
+  if (name === 'executions')  loadExecutions();
+  if (name === 'blacklist')   loadBlacklist();
+}
+
+// ---- TOAST ----
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + type;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ---- MODALS ----
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+// ---- HELPERS ----
+function ts(unix) {
+  if (!unix) return '—';
+  return new Date(unix * 1000).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function statusBadge(s) {
+  if (s === 'active')   return '<span class="badge b-green">active</span>';
+  if (s === 'paused')   return '<span class="badge b-yellow">paused</span>';
+  if (s === 'banned')   return '<span class="badge b-red">banned</span>';
+  return '<span class="badge b-dim">' + s + '</span>';
+}
+
+// ---- OVERVIEW ----
+async function loadOverview() {
+  try {
+    const stats = await api('GET', '/stats/overview');
+    document.getElementById('ov-scripts').textContent = stats.scripts;
+    document.getElementById('ov-keys').textContent    = stats.activeKeys.toLocaleString();
+    document.getElementById('ov-execs').textContent   = stats.execsToday.toLocaleString();
+    document.getElementById('ov-blocked').textContent = stats.blockedToday;
+
+    const scripts = await api('GET', '/scripts');
+    const tbody = document.getElementById('ov-table');
+    if (!scripts.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><h3>No scripts yet</h3><p>Create your first script to get started.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = scripts.map(s => `
+      <tr>
+        <td class="mono">${esc(s.name)}</td>
+        <td>${statusBadge(s.status)}</td>
+        <td class="mono muted">${s.active_keys || 0}</td>
+        <td class="mono" style="color:var(--accent)">${s.executions_today || 0}</td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ---- SCRIPTS ----
+async function loadScripts() {
+  try {
+    const scripts = await api('GET', '/scripts');
+    const tbody = document.getElementById('scripts-table');
+    if (!scripts.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><h3>No scripts</h3><p>Click "+ New script" to add one.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = scripts.map(s => `
+      <tr>
+        <td class="mono">${esc(s.name)}</td>
+        <td class="muted" style="font-size:12px">${esc(s.description || '—')}</td>
+        <td>${statusBadge(s.status)}</td>
+        <td class="mono muted">${s.total_keys || 0}</td>
+        <td class="mono" style="color:var(--accent)">${s.total_executions || 0}</td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick="toggleScript(${s.id},'${s.status === 'active' ? 'paused' : 'active'}')">${s.status === 'active' ? 'Pause' : 'Activate'}</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteScript(${s.id})">Delete</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function createScript() {
+  const name = document.getElementById('sc-name').value.trim();
+  if (!name) { toast('Name is required', 'err'); return; }
+  try {
+    await api('POST', '/scripts', { name, description: document.getElementById('sc-desc').value });
+    closeModal('modal-script');
+    document.getElementById('sc-name').value = '';
+    document.getElementById('sc-desc').value = '';
+    toast('Script created');
+    loadScripts();
+    populateScriptSelects();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function toggleScript(id, status) {
+  try { await api('PATCH', '/scripts/' + id, { status }); toast('Script updated'); loadScripts(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
+async function deleteScript(id) {
+  if (!confirm('Delete this script and all its keys?')) return;
+  try { await api('DELETE', '/scripts/' + id); toast('Deleted'); loadScripts(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
+// ---- KEYS ----
+let allScripts = [];
+async function populateScriptSelects() {
+  try {
+    allScripts = await api('GET', '/scripts');
+    const opts = allScripts.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    document.getElementById('k-script').innerHTML = opts || '<option>No scripts</option>';
+    document.getElementById('keys-filter-script').innerHTML = '<option value="">All scripts</option>' + opts;
+  } catch {}
+}
+
+async function loadKeys() {
+  const scriptId = document.getElementById('keys-filter-script').value;
+  const status   = document.getElementById('keys-filter-status').value;
+  let qs = new URLSearchParams();
+  if (scriptId) qs.set('script_id', scriptId);
+  if (status)   qs.set('status', status);
+  try {
+    const data = await api('GET', '/keys?' + qs);
+    const tbody = document.getElementById('keys-table');
+    if (!data.keys.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><h3>No keys</h3><p>Generate keys for your scripts.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.keys.map(k => `
+      <tr>
+        <td class="mono" style="font-size:11px;color:var(--muted);letter-spacing:0.04em">${esc(k.key)}</td>
+        <td class="mono muted" style="font-size:11px">${esc(k.script_name || '—')}</td>
+        <td>${statusBadge(k.status)}</td>
+        <td class="mono muted" style="font-size:11px">${k.expires_at ? ts(k.expires_at) : '—'}</td>
+        <td class="mono" style="font-size:11px;color:var(--accent)">${k.executions}${k.max_executions ? ' / ' + k.max_executions : ''}</td>
+        <td class="mono muted" style="font-size:11px">${k.hwid ? k.hwid.slice(0,12) + '...' : '—'}</td>
+        <td style="text-align:right;white-space:nowrap">
+          ${k.status === 'active' ? `<button class="btn btn-ghost btn-sm" onclick="setKeyStatus(${k.id},'paused')">Pause</button>` : `<button class="btn btn-ghost btn-sm" onclick="setKeyStatus(${k.id},'active')">Activate</button>`}
+          <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteKey(${k.id})">Delete</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function generateKeys() {
+  const script_id     = document.getElementById('k-script').value;
+  const label         = document.getElementById('k-label').value;
+  const count         = document.getElementById('k-count').value;
+  const expires_at    = document.getElementById('k-exp').value;
+  const max_executions = document.getElementById('k-maxexec').value;
+  if (!script_id) { toast('Select a script', 'err'); return; }
+  try {
+    await api('POST', '/keys', { script_id: +script_id, label, count: +count, expires_at: expires_at || null, max_executions: max_executions ? +max_executions : null });
+    closeModal('modal-key');
+    toast('Keys generated');
+    loadKeys();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function setKeyStatus(id, status) {
+  try { await api('PATCH', '/keys/' + id, { status }); loadKeys(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
+async function deleteKey(id) {
+  if (!confirm('Delete this key?')) return;
+  try { await api('DELETE', '/keys/' + id); toast('Key deleted'); loadKeys(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
+// ---- EXECUTIONS ----
+async function loadExecutions() {
+  try {
+    const rows = await api('GET', '/stats/executions?limit=100');
+    const tbody = document.getElementById('exec-table');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><h3>No executions yet</h3></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(e => `
+      <tr>
+        <td class="mono muted" style="font-size:11px">${ts(e.created_at)}</td>
+        <td class="mono" style="font-size:11px;color:var(--muted)">${esc(e.key ? e.key.slice(0,18) + '...' : '—')}</td>
+        <td class="mono muted" style="font-size:11px">${esc(e.script_name || '—')}</td>
+        <td class="mono muted" style="font-size:11px">${e.hwid ? e.hwid.slice(0,14) + '...' : '—'}</td>
+        <td class="mono muted" style="font-size:11px">${e.ip || '—'}</td>
+        <td>${e.success ? '<span class="badge b-green">ok</span>' : '<span class="badge b-red">blocked</span>'}</td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// ---- BLACKLIST ----
+async function loadBlacklist() {
+  try {
+    const rows = await api('GET', '/blacklist');
+    const tbody = document.getElementById('bl-table');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><h3>Blacklist is empty</h3><p>Block HWIDs, IPs, or keys here.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td><span class="badge b-accent">${r.type}</span></td>
+        <td class="mono" style="font-size:12px">${esc(r.value)}</td>
+        <td class="muted" style="font-size:12px">${esc(r.reason || '—')}</td>
+        <td class="mono muted" style="font-size:11px">${ts(r.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeBlacklist(${r.id})">Remove</button></td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function addBlacklist() {
+  const type   = document.getElementById('bl-type').value;
+  const value  = document.getElementById('bl-value').value.trim();
+  const reason = document.getElementById('bl-reason').value.trim();
+  if (!value) { toast('Value is required', 'err'); return; }
+  try {
+    await api('POST', '/blacklist', { type, value, reason });
+    closeModal('modal-blacklist');
+    document.getElementById('bl-value').value = '';
+    document.getElementById('bl-reason').value = '';
+    toast('Added to blacklist');
+    loadBlacklist();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function removeBlacklist(id) {
+  try { await api('DELETE', '/blacklist/' + id); toast('Removed'); loadBlacklist(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
+// ---- SETTINGS ----
+async function regenApiKey() {
+  if (!confirm('Regenerate your API key? The old one will stop working immediately.')) return;
+  try {
+    const data = await api('POST', '/auth/regenerate-key');
+    document.getElementById('s-apikey').textContent = data.api_key;
+    user.api_key = data.api_key;
+    localStorage.setItem('sg_user', JSON.stringify(user));
+    toast('API key regenerated');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+function copyApiKey() {
+  navigator.clipboard.writeText(document.getElementById('s-apikey').textContent);
+  toast('Copied to clipboard');
+}
+
+function logout() {
+  localStorage.removeItem('sg_token');
+  localStorage.removeItem('sg_user');
+  window.location.href = 'login.html';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

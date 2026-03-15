@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptGuard — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07070a; --surface: #111118; --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.12);
+  --text: #e8e8f0; --muted: #6b6b82; --dim: #333344;
+  --accent: #7c6af7; --accent2: #5b4de0; --glow: rgba(124,106,247,0.2);
+  --green: #3dd68c; --red: #f75a5a;
+  --font: 'Syne', sans-serif; --body: 'Outfit', sans-serif; --mono: 'IBM Plex Mono', monospace;
+}
+body { font-family: var(--body); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,106,247,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.back { position: fixed; top: 20px; left: 24px; font-size: 13px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.15s; }
+.back:hover { color: var(--text); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 36px 32px;
+  width: 100%; max-width: 400px;
+  position: relative; z-index: 1;
+}
+
+.card-logo {
+  font-family: var(--font); font-size: 18px; font-weight: 800; letter-spacing: -0.03em;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 28px;
+}
+.logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+.tabs { display: flex; background: rgba(255,255,255,0.04); border-radius: 9px; padding: 3px; margin-bottom: 26px; }
+.tab { flex: 1; text-align: center; padding: 7px; border-radius: 7px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.15s; font-weight: 400; border: none; background: transparent; font-family: var(--body); }
+.tab.on { background: var(--bg); color: var(--text); font-weight: 500; }
+
+.form { display: none; flex-direction: column; gap: 14px; }
+.form.on { display: flex; }
+
+label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+
+input {
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-family: var(--body); font-size: 14px;
+  padding: 10px 13px; outline: none; transition: border-color 0.15s;
+}
+input:focus { border-color: rgba(124,106,247,0.55); }
+input::placeholder { color: var(--dim); }
+
+.submit {
+  width: 100%; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: var(--body); border: none; background: var(--accent); color: #fff;
+  transition: all 0.15s; margin-top: 4px;
+}
+.submit:hover { background: var(--accent2); box-shadow: 0 4px 22px var(--glow); }
+.submit:active { transform: scale(0.98); }
+.submit:disabled { background: #2a2a3a; color: var(--muted); cursor: not-allowed; box-shadow: none; }
+
+.msg { font-size: 13px; padding: 9px 12px; border-radius: 8px; display: none; }
+.msg.error { background: rgba(247,90,90,0.1); color: var(--red); border: 1px solid rgba(247,90,90,0.2); display: block; }
+.msg.success { background: rgba(61,214,140,0.1); color: var(--green); border: 1px solid rgba(61,214,140,0.2); display: block; }
+
+.divider { display: flex; align-items: center; gap: 10px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.divider span { font-size: 12px; color: var(--dim); white-space: nowrap; }
+
+.hint { font-size: 12px; color: var(--muted); text-align: center; }
+.hint a { color: var(--accent); text-decoration: none; cursor: pointer; }
+.hint a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  Back to home
+</a>
+
+<div class="card">
+  <div class="card-logo"><div class="logo-dot"></div>ScriptGuard</div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('login')">Sign in</button>
+    <button class="tab" onclick="switchTab('register')">Create account</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <!-- LOGIN -->
+  <form class="form on" id="form-login" onsubmit="handleLogin(event)">
+    <div>
+      <label>Email</label>
+      <input type="email" id="l-email" placeholder="you@example.com" required>
+    </div>
+    <div>
+      <label>Password</label>
+      <input type="password" id="l-pass" placeholder="••••••••" required>
+    </div>
+    <button class="submit" type="submit" id="l-btn">Sign in</button>
+  </form>
+
+  <!-- REGISTER -->
+  <form class="form" id="form-register" onsubmit="handleRegister(event)">
+    <div>
+      <label>Username</label>
+      <input type="text" id="r-user" placeholder="yourname" required>
+    </div>
+    <div>
+      <label>Email</label>
+      <input type="email" id="r-email" placeholder="you@example.com" required>
+    </div>
+    <div>
+      <label>Password</label>
+      <input type="password" id="r-pass" placeholder="Min. 8 characters" required>
+    </div>
+    <button class="submit" type="submit" id="r-btn">Create account</button>
+    <p class="hint">By signing up you agree to our <a href="#">Terms of Service</a></p>
+  </form>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('on', (i === 0) === (tab === 'login')));
+  document.getElementById('form-login').classList.toggle('on', tab === 'login');
+  document.getElementById('form-register').classList.toggle('on', tab === 'register');
+  clearMsg();
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+function clearMsg() {
+  const el = document.getElementById('msg');
+  el.className = 'msg';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  clearMsg();
+  const btn = document.getElementById('l-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+
+  try {
+    const res  = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('l-email').value, password: document.getElementById('l-pass').value })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    localStorage.setItem('sg_token', data.token);
+    localStorage.setItem('sg_user',  JSON.stringify(data.user));
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    showMsg(err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  clearMsg();
+  const btn = document.getElementById('r-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+
+  try {
+    const res  = await fetch(API + '/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('r-user').value,
+        email:    document.getElementById('r-email').value,
+        password: document.getElementById('r-pass').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed');
+    localStorage.setItem('sg_token', data.token);
+    localStorage.setItem('sg_user',  JSON.stringify(data.user));
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    showMsg(err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+}
+
+// Auto-switch to register tab if hash present
+if (window.location.hash === '#register') switchTab('register');
+</script>
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptGuard — Script Protection & Licensing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #07070a;
+  --bg2: #0c0c10;
+  --bg3: #111118;
+  --surface: #16161f;
+  --surface2: #1e1e2a;
+  --border: rgba(255,255,255,0.055);
+  --border2: rgba(255,255,255,0.1);
+  --text: #e8e8f0;
+  --muted: #6b6b82;
+  --dim: #333344;
+  --accent: #7c6af7;
+  --accent2: #5b4de0;
+  --glow: rgba(124,106,247,0.18);
+  --green: #3dd68c;
+  --yellow: #f7c948;
+  --red: #f75a5a;
+  --font: 'Syne', sans-serif;
+  --body: 'Outfit', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--body); background: var(--bg); color: var(--text); overflow-x: hidden; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 2px; }
+
+/* NOISE LAYER */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(7,7,10,0.88);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+  height: 58px; padding: 0 6%;
+  display: flex; align-items: center; gap: 24px;
+}
+
+.logo {
+  font-family: var(--font);
+  font-size: 17px; font-weight: 800;
+  letter-spacing: -0.03em;
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; color: var(--text);
+}
+
+.logo-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.nav-links { display: flex; gap: 2px; margin-left: 12px; }
+
+.nav-a {
+  font-size: 13px; color: var(--muted);
+  padding: 6px 11px; border-radius: 6px;
+  text-decoration: none; transition: all 0.15s; font-weight: 400;
+}
+.nav-a:hover { color: var(--text); background: var(--surface); }
+
+.nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; font-family: var(--body); cursor: pointer; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+
+.btn-ghost { font-size: 13px; color: var(--muted); padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border2); background: transparent; }
+.btn-ghost:hover { color: var(--text); background: var(--surface); }
+
+.btn-primary { font-size: 13px; color: #fff; padding: 8px 16px; border-radius: 7px; background: var(--accent); font-weight: 500; }
+.btn-primary:hover { background: var(--accent2); box-shadow: 0 0 22px var(--glow); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-lg { font-size: 15px; padding: 13px 28px; border-radius: 10px; font-weight: 500; }
+
+/* HERO */
+.hero {
+  position: relative; z-index: 1;
+  padding: 158px 6% 90px;
+  text-align: center; overflow: hidden;
+}
+
+.hero-beam {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,106,247,0.13) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 5px 14px 5px 9px;
+  font-size: 12px; color: var(--muted);
+  margin-bottom: 30px; font-family: var(--mono);
+  animation: slideDown 0.55s ease both;
+}
+.pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 7px var(--green); }
+
+@keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideUp   { from { opacity:0; transform:translateY(14px);  } to { opacity:1; transform:translateY(0); } }
+
+h1.hero-title {
+  font-family: var(--font);
+  font-size: clamp(44px, 7.5vw, 84px);
+  font-weight: 800; line-height: 0.98;
+  letter-spacing: -0.05em;
+  margin-bottom: 22px;
+  animation: slideUp 0.6s 0.1s ease both;
+}
+
+h1.hero-title .hl { color: var(--accent); }
+
+.hero-sub {
+  font-size: 17px; color: var(--muted); font-weight: 300;
+  max-width: 500px; margin: 0 auto 38px; line-height: 1.65;
+  animation: slideUp 0.6s 0.2s ease both;
+}
+
+.hero-cta {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  animation: slideUp 0.6s 0.3s ease both;
+}
+
+.btn-outline { font-size: 15px; color: var(--muted); padding: 13px 28px; border-radius: 10px; border: 1px solid var(--border2); background: transparent; font-weight: 400; }
+.btn-outline:hover { color: var(--text); background: var(--surface); }
+
+/* STATS */
+.stats {
+  position: relative; z-index: 1;
+  padding: 0 6% 80px;
+  animation: slideUp 0.6s 0.35s ease both;
+}
+
+.stats-row {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  display: flex; max-width: 780px; margin: 0 auto;
+}
+
+.stat {
+  flex: 1; padding: 22px 16px; text-align: center;
+  border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+
+.stat-n {
+  font-family: var(--font); font-size: 28px; font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.stat-n .a { color: var(--accent); }
+.stat-l { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 300; }
+
+/* DIVIDER */
+.glow-divider { height: 1px; background: linear-gradient(90deg,transparent,var(--accent),transparent); opacity: 0.25; }
+
+/* SECTIONS */
+section { position: relative; z-index: 1; padding: 90px 6%; }
+.section-label { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 14px; }
+.section-h { font-family: var(--font); font-size: clamp(30px, 4.5vw, 48px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 14px; }
+.section-p { font-size: 16px; color: var(--muted); max-width: 460px; line-height: 1.65; font-weight: 300; }
+
+/* FEATURES */
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 10px; margin-top: 52px;
+}
+
+.feat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 26px 22px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.feat:hover { border-color: rgba(124,106,247,0.28); transform: translateY(-2px); }
+
+.feat-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; margin-bottom: 18px; flex-shrink: 0;
+}
+
+.feat h3 { font-family: var(--font); font-size: 16px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+.feat p  { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+/* HOW IT WORKS */
+.steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; margin-top: 52px;
+}
+
+.step { padding: 30px 24px; border-right: 1px solid var(--border); }
+.step:last-child { border-right: none; }
+.step-n { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.08em; margin-bottom: 16px; }
+.step h3 { font-family: var(--font); font-size: 15px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+.step p  { font-size: 12px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+/* DASHBOARD PREVIEW */
+.preview-wrap {
+  margin-top: 52px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+}
+
+.preview-bar {
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+  padding: 11px 16px; display: flex; align-items: center; gap: 10px;
+}
+
+.win-dots { display: flex; gap: 5px; }
+.wd { width: 10px; height: 10px; border-radius: 50%; }
+.wd:nth-child(1) { background: #f75a5a; }
+.wd:nth-child(2) { background: #f7c948; }
+.wd:nth-child(3) { background: #3dd68c; }
+
+.url-bar { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 0 auto; }
+
+.preview-body { display: flex; min-height: 360px; }
+
+.p-sidebar {
+  width: 175px; border-right: 1px solid var(--border);
+  padding: 14px 9px; background: var(--bg2); flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.p-nav {
+  padding: 8px 11px; border-radius: 7px;
+  font-size: 12px; color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; gap: 8px; transition: all 0.15s;
+}
+.p-nav:hover { background: var(--surface); color: var(--text); }
+.p-nav.on { background: var(--surface2); color: var(--text); }
+.p-nav-icon { width: 15px; text-align: center; font-size: 12px; }
+
+.p-main { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
+.p-title { font-family: var(--font); font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+
+.p-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
+.p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; }
+.p-card-l { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-bottom: 7px; }
+.p-card-v { font-family: var(--font); font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+.p-card-d { font-size: 10px; color: var(--green); margin-top: 3px; font-family: var(--mono); }
+
+.p-table { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.p-th { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 8px 13px; border-bottom: 1px solid var(--border); font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.07em; text-transform: uppercase; }
+.p-tr { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 9px 13px; border-bottom: 1px solid var(--border); font-size: 12px; align-items: center; transition: background 0.1s; }
+.p-tr:last-child { border-bottom: none; }
+.p-tr:hover { background: var(--bg3); }
+.mono { font-family: var(--mono); }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 600; font-family: var(--mono); }
+.badge-green  { background: rgba(61,214,140,0.1);  color: var(--green); }
+.badge-yellow { background: rgba(247,201,72,0.1);  color: var(--yellow); }
+.badge-dim    { background: rgba(255,255,255,0.04); color: var(--muted); }
+
+/* PRICING */
+#pricing { background: var(--bg2); }
+
+.pricing-center { text-align: center; }
+.pricing-center .section-p { margin: 0 auto; }
+
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+  gap: 12px; margin-top: 52px; max-width: 860px; margin-left: auto; margin-right: auto;
+}
+
+.plan {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px 22px; position: relative;
+  transition: border-color 0.2s;
+}
+.plan.hot { border-color: var(--accent); background: linear-gradient(150deg, rgba(124,106,247,0.08) 0%, var(--surface) 55%); }
+
+.hot-label {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+  padding: 3px 12px; border-radius: 20px;
+  font-family: var(--mono); white-space: nowrap;
+}
+
+.plan-name { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+.plan-price { font-family: var(--font); font-size: 42px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.plan-price sup { font-size: 20px; font-weight: 600; vertical-align: super; }
+.plan-period { font-size: 12px; color: var(--muted); margin: 4px 0 18px; }
+.plan-hr { height: 1px; background: var(--border); margin: 16px 0; }
+.plan-feats { display: flex; flex-direction: column; gap: 9px; margin-bottom: 22px; }
+.plan-feat { font-size: 13px; color: #aaa; display: flex; align-items: flex-start; gap: 8px; font-weight: 300; }
+.plan-feat .ok  { color: var(--green); flex-shrink: 0; }
+.plan-feat .no  { color: var(--dim);   flex-shrink: 0; }
+.plan-feat.off  { color: var(--dim); }
+
+.btn-plan { width: 100%; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--body); transition: all 0.15s; border: 1px solid var(--border2); background: transparent; color: var(--muted); }
+.btn-plan:hover { background: var(--surface2); color: var(--text); }
+.btn-plan.main { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-plan.main:hover { background: var(--accent2); box-shadow: 0 4px 24px var(--glow); }
+
+/* FOOTER */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 36px 6%;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px;
+}
+
+.footer-logo { font-family: var(--font); font-size: 15px; font-weight: 800; letter-spacing: -0.03em; }
+.footer-links { display: flex; gap: 20px; }
+.footer-l { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; cursor: pointer; }
+.footer-l:hover { color: var(--text); }
+.footer-copy { font-size: 11px; color: var(--dim); font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-dot"></div>
+    ScriptGuard
+  </a>
+  <div class="nav-links">
+    <a class="nav-a" href="#features">Features</a>
+    <a class="nav-a" href="#how">How it works</a>
+    <a class="nav-a" href="#pricing">Pricing</a>
+    <a class="nav-a" href="dashboard.html">Dashboard</a>
+  </div>
+  <div class="nav-right">
+    <a class="btn btn-ghost" href="login.html">Sign in</a>
+    <a class="btn btn-primary" href="login.html#register">Get started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-beam"></div>
+  <div class="pill"><div class="pill-dot"></div>3,200+ developers protected</div>
+  <h1 class="hero-title">Protect your scripts.<br><span class="hl">License</span> what you build.</h1>
+  <p class="hero-sub">Obfuscation, key management, execution tracking, and blacklisting — everything you need to monetize and secure your scripts.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary btn-lg" href="login.html#register">Start for free</a>
+    <a class="btn btn-outline btn-lg" href="#dashboard-preview">View dashboard</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-row">
+    <div class="stat"><div class="stat-n">3.2<span class="a">K</span></div><div class="stat-l">Active developers</div></div>
+    <div class="stat"><div class="stat-n">12<span class="a">M</span></div><div class="stat-l">Total executions</div></div>
+    <div class="stat"><div class="stat-n">98<span class="a">%</span></div><div class="stat-l">Uptime SLA</div></div>
+    <div class="stat"><div class="stat-n"><span class="a">&lt;</span>50ms</div><div class="stat-l">Key verification</div></div>
+  </div>
+</div>
+
+<div class="glow-divider"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">// features</div>
+  <div class="section-h">Everything in<br>one platform</div>
+  <div class="section-p">From script delivery to full monetization. No third-party tools needed.</div>
+
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(124,106,247,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c6af7" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3>Advanced obfuscation</h3>
+      <p>Multi-layer obfuscation that makes reverse engineering practically impossible. Your source stays yours.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(61,214,140,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3dd68c" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      </div>
+      <h3>License key system</h3>
+      <p>Generate single or bulk keys with fine-grained controls: expiry, execution limits, HWID lock, and IP restrictions.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(247,201,72,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <h3>Real-time analytics</h3>
+      <p>Track every execution: timestamp, IP, HWID, success or failure. 14-day charts out of the box.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(247,90,90,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f75a5a" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
+      <h3>Blacklist & whitelist</h3>
+      <p>Instantly block HWIDs, IPs, or specific keys. Protect your user base from abusers and resellers.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(124,106,247,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c6af7" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <h3>Fast verify API</h3>
+      <p>A single POST request to verify any key. Under 50ms globally. Built for high-concurrency scripts.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(61,214,140,0.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3dd68c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3>Seller system</h3>
+      <p>Create reseller accounts, set commission rates, and let sellers issue keys under your scripts automatically.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background:var(--bg2)">
+  <div class="section-label">// how it works</div>
+  <div class="section-h">Up and running<br>in minutes</div>
+  <div class="steps">
+    <div class="step"><div class="step-n">01 —</div><h3>Upload your script</h3><p>Add your script to ScriptGuard and configure your preferred obfuscation level and settings.</p></div>
+    <div class="step"><div class="step-n">02 —</div><h3>Configure licensing</h3><p>Set expiry dates, max executions, HWID locking, and IP restrictions per key or as a global default.</p></div>
+    <div class="step"><div class="step-n">03 —</div><h3>Issue keys</h3><p>Generate individual or bulk keys and distribute them to your users or via your Seller network.</p></div>
+    <div class="step"><div class="step-n">04 —</div><h3>Track and earn</h3><p>Monitor executions in real time, revoke access instantly, and grow recurring revenue from your scripts.</p></div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section id="dashboard-preview">
+  <div class="section-label">// dashboard</div>
+  <div class="section-h">A dashboard built<br>for developers</div>
+  <div class="section-p">Scripts, keys, execution logs — all in one clean interface.</div>
+
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="win-dots"><div class="wd"></div><div class="wd"></div><div class="wd"></div></div>
+      <div class="url-bar">app.scriptguard.io/dashboard</div>
+    </div>
+    <div class="preview-body">
+      <div class="p-sidebar">
+        <div class="p-nav on"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </span>Overview</div>
+        <div class="p-nav"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </span>Scripts</div>
+        <div class="p-nav"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </span>Keys</div>
+        <div class="p-nav"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </span>Analytics</div>
+        <div class="p-nav"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </span>Blacklist</div>
+        <div class="p-nav"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </span>Sellers</div>
+        <div class="p-nav" style="margin-top:auto"><span class="p-nav-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        </span>Settings</div>
+      </div>
+
+      <div class="p-main">
+        <div class="p-title">Overview</div>
+        <div class="p-cards">
+          <div class="p-card"><div class="p-card-l">Scripts</div><div class="p-card-v" style="color:var(--accent)">4</div></div>
+          <div class="p-card"><div class="p-card-l">Active keys</div><div class="p-card-v" style="color:var(--green)">1,284</div><div class="p-card-d">+23 today</div></div>
+          <div class="p-card"><div class="p-card-l">Executions today</div><div class="p-card-v">8,419</div></div>
+          <div class="p-card"><div class="p-card-l">Blocked today</div><div class="p-card-v" style="color:var(--red)">37</div></div>
+        </div>
+        <div class="p-table">
+          <div class="p-th"><span>Script</span><span>Status</span><span>Keys</span><span>Executions</span></div>
+          <div class="p-tr"><span class="mono">aimbot_v3.lua</span><span><span class="badge badge-green">active</span></span><span class="mono" style="color:var(--muted)">842</span><span class="mono" style="color:var(--accent)">5,291</span></div>
+          <div class="p-tr"><span class="mono">esp_premium.lua</span><span><span class="badge badge-green">active</span></span><span class="mono" style="color:var(--muted)">312</span><span class="mono" style="color:var(--accent)">2,108</span></div>
+          <div class="p-tr"><span class="mono">farm_bot.lua</span><span><span class="badge badge-yellow">paused</span></span><span class="mono" style="color:var(--muted)">98</span><span class="mono" style="color:var(--accent)">1,020</span></div>
+          <div class="p-tr"><span class="mono">ui_lib.lua</span><span><span class="badge badge-dim">inactive</span></span><span class="mono" style="color:var(--muted)">32</span><span class="mono" style="color:var(--muted)">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="pricing-center">
+    <div class="section-label">// pricing</div>
+    <div class="section-h">Simple pricing</div>
+    <div class="section-p">Scale as you grow. Upgrade or downgrade at any time.</div>
+  </div>
+
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-name">Free</div>
+      <div class="plan-price"><sup>$</sup>0</div>
+      <div class="plan-period">free forever</div>
+      <div class="plan-hr"></div>
+      <div class="plan-feats">
+        <div class="plan-feat"><span class="ok">+</span>1 script</div>
+        <div class="plan-feat"><span class="ok">+</span>Up to 50 keys</div>
+        <div class="plan-feat"><span class="ok">+</span>Basic obfuscation</div>
+        <div class="plan-feat off"><span class="no">-</span>Analytics dashboard</div>
+        <div class="plan-feat off"><span class="no">-</span>Seller system</div>
+        <div class="plan-feat off"><span class="no">-</span>API access</div>
+      </div>
+      <a class="btn-plan" href="login.html#register">Get started</a>
+    </div>
+
+    <div class="plan hot">
+      <div class="hot-label">Most popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price"><sup>$</sup>12</div>
+      <div class="plan-period">per month</div>
+      <div class="plan-hr"></div>
+      <div class="plan-feats">
+        <div class="plan-feat"><span class="ok">+</span>10 scripts</div>
+        <div class="plan-feat"><span class="ok">+</span>Unlimited keys</div>
+        <div class="plan-feat"><span class="ok">+</span>Advanced obfuscation</div>
+        <div class="plan-feat"><span class="ok">+</span>Full analytics</div>
+        <div class="plan-feat"><span class="ok">+</span>Seller system</div>
+        <div class="plan-feat off"><span class="no">-</span>API access</div>
+      </div>
+      <a class="btn-plan main" href="login.html#register">Start Pro</a>
+    </div>
+
+    <div class="plan">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price"><sup>$</sup>49</div>
+      <div class="plan-period">per month</div>
+      <div class="plan-hr"></div>
+      <div class="plan-feats">
+        <div class="plan-feat"><span class="ok">+</span>Unlimited scripts</div>
+        <div class="plan-feat"><span class="ok">+</span>Unlimited keys</div>
+        <div class="plan-feat"><span class="ok">+</span>Maximum obfuscation</div>
+        <div class="plan-feat"><span class="ok">+</span>Full analytics + logs</div>
+        <div class="plan-feat"><span class="ok">+</span>Seller system</div>
+        <div class="plan-feat"><span class="ok">+</span>REST API access</div>
+      </div>
+      <a class="btn-plan" href="login.html#register">Start Enterprise</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">ScriptGuard</div>
+  <div class="footer-links">
+    <a class="footer-l" href="#">Docs</a>
+    <a class="footer-l" href="#">Discord</a>
+    <a class="footer-l" href="#">Terms</a>
+    <a class="footer-l" href="#">Privacy</a>
+  </div>
+  <div class="footer-copy">© 2026 ScriptGuard. All rights reserved.</div>
+</footer>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (href.length > 1) {
+      e.preventDefault();
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+document.querySelectorAll('.feat').forEach(c => {
+  c.addEventListener('mousemove', e => {
+    const r = c.getBoundingClientRect();
+    c.style.background = `radial-gradient(circle at ${e.clientX-r.left}px ${e.clientY-r.top}px, rgba(124,106,247,0.07) 0%, #16161f 60%)`;
+  });
+  c.addEventListener('mouseleave', () => c.style.background = '');
+});
+</script>
+</body>
+</html>
